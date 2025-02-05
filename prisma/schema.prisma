@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_DEV")
+}
+
+model User {
+  id           String  @id @default(cuid())
+  clerkUserId  String  @unique
+  email        String  @unique
+  firstName    String?
+  lastName     String?
+  name         String?
+  imageUrl     String?
+  isAdmin      Role    @default(USER)
+  userTimeZone String  @default("America/Chicago")
+  isOnboarded  Boolean @default(false)
+
+  //timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //relations
+  habits   Habit[]
+  trackers Tracker[]
+
+  @@index([clerkUserId])
+  @@map("user")
+}
+
+model Habit {
+  id           String        @id @default(cuid())
+  //basics
+  name         String        @db.VarChar(35)
+  description  String        @db.VarChar(255)
+  category     HabitCategory @default(OTHER)
+  start_date   DateTime
+  status       HabitStatus   @default(UPCOMING)
+  set_reminder Boolean       @default(false)
+
+  // difficulty and strength
+  start_difficulty    Decimal       @default(5.0)
+  current_difficulty  Decimal       @default(5.0)
+  start_strength      HabitStrength @default(RUNNING)
+  current_strength    HabitStrength @default(RUNNING)
+
+  //relation
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  trackers Tracker[]
+  
+  //timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([name])
+  @@map("habit")
+}
+
+model Tracker {
+  id                  String             @id @default(cuid())
+  notes               String?            @db.VarChar(60)
+  logged_at           DateTime
+  is_default Boolean            @default(true)
+  status              HabitTrackerStatus @default(ACTIVE)
+  is_tracker_updated  Boolean            @default(false)
+  daily_difficulty    Decimal
+  expected_difficulty Decimal
+
+  // relations
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  habitId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  //timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([habitId, logged_at, userId], name: "habit_id_logged_at")
+  @@index([logged_at])
+  @@map("tracker")
+}
+
+// ENUMS
+enum Role {
+  USER
+  ADMIN
+}
+
+enum HabitStrength {
+  CRAWLING
+  WALKING
+  RUNNING
+  SPRINTING
+  FLYING
+}
+
+enum HabitCategory {
+  HEALTH_FITNESS
+  PERSONAL_GROWTH
+  PRODUCTIVITY
+  MENTAL_WELLBEING
+  RELATIONSHIPS
+  FINANCES
+  SUSTAINABILITY
+  OTHER
+}
+
+enum HabitStatus {
+  UPCOMING
+  ACTIVE
+  DISABLED
+}
+
+enum HabitTrackerStatus {
+  UPCOMING
+  ACTIVE
+  MISSED
+  COMPLETED
+}
