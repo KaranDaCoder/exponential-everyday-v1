@@ -19,7 +19,7 @@ const OverviewPage = async () => {
   const [createTrackerResult, updateHabitsResult, updateTrackersResult] = await Promise.all([
     //bulkUpdateHabits(),  
     //bulkUpdateTrackers(),
-    createTrackers(),
+    // createTrackers(),
   ]);
 
   const {data} = await getUserHabits();
